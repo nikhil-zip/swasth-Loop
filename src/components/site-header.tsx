@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { signOutAction } from "@/app/actions/auth";
 import { Brand } from "@/components/brand";
+import type { AccountRole } from "@/lib/supabase/database.types";
 
 const links = [
   { href: "/doctors", label: "Find doctors" },
@@ -11,7 +13,17 @@ const links = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function SiteHeader() {
+const accountLabels: Record<AccountRole, string> = {
+  patient: "Patient account",
+  doctor: "Doctor account",
+  admin: "Admin account",
+};
+
+export function SiteHeader({
+  account,
+}: {
+  account: { fullName: string; role: AccountRole } | null;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -24,14 +36,25 @@ export function SiteHeader() {
               {link.label}
             </Link>
           ))}
+          {account?.role === "patient" && <Link className="nav-link" href="/doctor/apply">Doctor application</Link>}
+          {account?.role === "admin" && <Link className="nav-link" href="/admin/doctor-applications">Doctor applications</Link>}
         </nav>
         <div className="header-actions">
-          <Link className="login-link" href="/login">
-            Log in
-          </Link>
-          <Link className="button button-small button-primary" href="/register">
-            Create account
-          </Link>
+          {account ? (
+            <>
+              <Link aria-label={`${accountLabels[account.role]} for ${account.fullName}`} className="login-link" href="/account">
+                {accountLabels[account.role]}
+              </Link>
+              <form action={signOutAction}>
+                <button className="login-link signout-link" type="submit">Log out</button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link className="login-link" href="/login">Log in</Link>
+              <Link className="button button-small button-primary" href="/register">Create account</Link>
+            </>
+          )}
         </div>
         <button
           aria-controls="mobile-navigation"
@@ -60,16 +83,33 @@ export function SiteHeader() {
               {link.label}
             </Link>
           ))}
-          <Link className="mobile-nav-link" href="/login" onClick={() => setMenuOpen(false)}>
-            Log in
-          </Link>
-          <Link
-            className="button button-primary mobile-create-account"
-            href="/register"
-            onClick={() => setMenuOpen(false)}
-          >
-            Create account
-          </Link>
+          {account?.role === "patient" && (
+            <Link className="mobile-nav-link" href="/doctor/apply" onClick={() => setMenuOpen(false)}>
+              Doctor application
+            </Link>
+          )}
+          {account?.role === "admin" && (
+            <Link className="mobile-nav-link" href="/admin/doctor-applications" onClick={() => setMenuOpen(false)}>
+              Doctor applications
+            </Link>
+          )}
+          {account ? (
+            <>
+              <Link className="mobile-nav-link" href="/account" onClick={() => setMenuOpen(false)}>
+                {accountLabels[account.role]}
+              </Link>
+              <form action={signOutAction}>
+                <button className="mobile-nav-link signout-link" type="submit">Log out</button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link className="mobile-nav-link" href="/login" onClick={() => setMenuOpen(false)}>Log in</Link>
+              <Link className="button button-primary mobile-create-account" href="/register" onClick={() => setMenuOpen(false)}>
+                Create account
+              </Link>
+            </>
+          )}
         </nav>
       )}
     </header>

@@ -1,24 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { PageHeading } from "@/components/page-heading";
+import { RegisterForm } from "@/components/auth/register-form";
+import { getCurrentAccount } from "@/lib/auth/current-account";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const metadata: Metadata = { title: "Create account" };
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  const account = await getCurrentAccount();
+  if (account) redirect("/account");
+
   return (
     <div className="page-shell">
       <div className="container">
         <PageHeading
-          description="Registration is not open yet."
+          description="Create an account to continue with Swasthloop."
           eyebrow="Get started"
-          title="Create a Swasthloop account"
+          title="Create a patient account"
         />
-        <section className="auth-notice">
-          <h2>Registration is being prepared</h2>
-          <p>
-            No account or patient data is collected on this page. When registration opens,
-            the sign-up process will explain what information is needed. <Link href="/contact">Contact details</Link> are not available yet.
-          </p>
+        <section className="auth-card" aria-label="Registration form">
+          <RegisterForm enabled={isSupabaseConfigured()} />
+          <p className="auth-switch">Already registered? <Link href="/login">Log in</Link></p>
         </section>
       </div>
     </div>

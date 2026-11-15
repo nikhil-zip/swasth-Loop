@@ -1,24 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { PageHeading } from "@/components/page-heading";
+import { LoginForm } from "@/components/auth/login-form";
+import { getCurrentAccount } from "@/lib/auth/current-account";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const metadata: Metadata = { title: "Log in" };
 
-export default function LoginPage() {
+const notices: Record<string, string> = {
+  "confirmation-failed": "That confirmation link could not be verified. Request a new link or sign in.",
+  "sign-in-required": "Sign in to continue.",
+  "signed-out": "You have been signed out.",
+};
+
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
+  const account = await getCurrentAccount();
+  if (account) redirect("/account");
+  const { message } = await searchParams;
+
   return (
     <div className="page-shell">
       <div className="container">
         <PageHeading
-          description="Patient and doctor accounts are not available yet."
+          description="Sign in to manage your Swasthloop account."
           eyebrow="Account access"
-          title="Log in to Swasthloop"
+          title="Welcome back"
         />
-        <section className="auth-notice">
-          <h2>Sign-in is coming later</h2>
-          <p>
-            Authentication has not been connected. No credentials are collected on this
-            page. You can read <Link href="/about">about the service</Link> while we prepare.
-          </p>
+        {message && notices[message] && <p className="form-message form-message-info page-notice" role="status">{notices[message]}</p>}
+        <section className="auth-card" aria-label="Log in form">
+          <LoginForm enabled={isSupabaseConfigured()} />
+          <p className="auth-switch">New to Swasthloop? <Link href="/register">Create a patient account</Link></p>
         </section>
       </div>
     </div>
